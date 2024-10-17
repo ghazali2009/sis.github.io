@@ -154,34 +154,6 @@
       </div>
     </div>
 
-    <!-- Share Data Modal -->
-    <div class="modal fade" id="shareDataModal" tabindex="-1" aria-labelledby="shareDataModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="shareDataModalLabel">Share Data Entries</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="shareDataForm">
-                <div class="mb-3">
-                    <label for="shareDate" class="form-label">Select Date:</label>
-                    <input type="date" class="form-control" id="shareDate" required>
-                </div>
-                <div class="mb-3">
-                    <label for="shareUsers" class="form-label">Share With:</label>
-                    <select multiple class="form-control" id="shareUsers" required>
-                        <!-- User options will be populated dynamically -->
-                    </select>
-                    <small class="form-text text-muted">Hold down the Ctrl (windows) or Command (Mac) button to select multiple users.</small>
-                </div>
-                <button type="submit" class="btn btn-primary">Share</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Login Container -->
     <div id="loginContainer">
         <h2 class="text-center">Login</h2>
@@ -216,10 +188,6 @@
             </button>
             <button class="btn btn-danger reset-button admin-only" id="resetButton" aria-label="Reset Data">
                 <i class="fas fa-sync-alt"></i> Reset Data
-            </button>
-            <!-- New Button to Share Data -->
-            <button class="btn btn-info share-data-button" id="shareDataButton" aria-label="Share Data Entries">
-                <i class="fas fa-share-alt"></i> Share Data Entries
             </button>
         </div>
         <input type="file" id="restoreFileInput" style="display: none;" accept=".xlsx, .xls" aria-label="Restore File Input">
@@ -470,14 +438,12 @@
             let currentMainTab = 'expenseDashboard';
             let currentSubTab = '';
             let darkMode = false;
-            let userId = ''; // Unique ID for the logged-in user
+            let sessionId = '';
             let editingEntry = null;
 
-            // Updated Users Array with Unique IDs
             const users = [
-                { id: 'user-1', username: 'admin', password: 'password123', role: 'admin' },
-                { id: 'user-2', username: 'dataentry', password: 'data123', role: 'dataentry' },
-                // Additional users can be added here with unique IDs
+                { username: 'admin', password: 'password123', role: 'admin' },
+                { username: 'dataentry', password: 'data123', role: 'dataentry' }
             ];
 
             // Cached DOM Elements
@@ -486,7 +452,6 @@
             const loginButton = document.getElementById('loginButton');
             const logoutButton = document.getElementById('logoutButton');
             const toggleDarkModeButton = document.getElementById('toggleDarkModeButton');
-            const shareDataButton = document.getElementById('shareDataButton'); // New Share Data Button
 
             const addCategoryButton = document.getElementById('addCategoryButton');
             const addSubcategoryButton = document.getElementById('addSubcategoryButton');
@@ -511,11 +476,6 @@
             const confirmationModalBody = document.getElementById('confirmationModalBody');
             const confirmActionButton = document.getElementById('confirmActionButton');
 
-            const shareDataModal = new bootstrap.Modal(document.getElementById('shareDataModal')); // New Share Data Modal
-            const shareDataForm = document.getElementById('shareDataForm');
-            const shareDateInput = document.getElementById('shareDate');
-            const shareUsersSelect = document.getElementById('shareUsers');
-
             const toastContainer = document.getElementById('toastContainer');
 
             // Event Listeners
@@ -523,14 +483,12 @@
                 checkLoginStatus();
                 initializeTooltips();
                 initializeEventListeners();
-                populateShareUsers(); // Populate users in Share Data Modal
             });
 
             function initializeEventListeners() {
                 loginButton.addEventListener('click', login);
                 logoutButton.addEventListener('click', logout);
                 toggleDarkModeButton.addEventListener('click', toggleDarkMode);
-                shareDataButton.addEventListener('click', openShareDataModal); // Share Data Button Click
 
                 addCategoryButton.addEventListener('click', addCategory);
                 addSubcategoryButton.addEventListener('click', addSubcategory);
@@ -550,9 +508,7 @@
                 restoreButton.addEventListener('click', () => restoreFileInput.click());
                 restoreFileInput.addEventListener('change', restoreDatabase);
                 resetButton.addEventListener('click', confirmReset);
-
                 confirmActionButton.addEventListener('click', performConfirmedAction);
-                shareDataForm.addEventListener('submit', shareDataEntries); // Handle Share Data Form Submission
             }
 
             function checkLoginStatus() {
@@ -560,8 +516,11 @@
                 if (loggedIn === 'true') {
                     loginContainer.style.display = 'none';
                     mainContent.style.display = 'block';
-                    userId = sessionStorage.getItem('userId');
                     const userRole = sessionStorage.getItem('userRole');
+                    if (userRole === 'dataentry') {
+                        sessionId = generateSessionId();
+                        sessionStorage.setItem('sessionId', sessionId);
+                    }
                     initializeApp();
                 } else {
                     loginContainer.style.display = 'block';
@@ -577,7 +536,6 @@
 
                 if (user) {
                     sessionStorage.setItem('loggedIn', 'true');
-                    sessionStorage.setItem('userId', user.id); // Store unique user ID
                     sessionStorage.setItem('userRole', user.role);
                     showToast('Login successful!', 'success');
                     checkLoginStatus();
@@ -589,7 +547,7 @@
             function logout() {
                 sessionStorage.setItem('loggedIn', 'false');
                 sessionStorage.removeItem('userRole');
-                sessionStorage.removeItem('userId');
+                sessionStorage.removeItem('sessionId');
                 showToast('Logged out successfully.', 'info');
                 checkLoginStatus();
             }
@@ -611,6 +569,7 @@
                 const userRole = sessionStorage.getItem('userRole');
 
                 if (userRole === 'dataentry') {
+                    sessionId = sessionStorage.getItem('sessionId');
                     // Hide admin-only elements
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
                     // Hide tabs
@@ -618,22 +577,19 @@
                     document.getElementById('subTabs').style.display = 'none';
                     document.getElementById('periodSelection').style.display = 'none';
                     document.getElementById('searchInput').style.display = 'none';
-                    document.getElementById('reportContent').style.display = 'none';
-                    document.getElementById('shareDataButton').style.display = 'none'; // Hide Share Data Button for Data Entry Users
 
                     // Hide reports and charts
                     document.getElementById('expenseDashboardContent').style.display = 'none';
                     document.getElementById('fundsDashboardContent').style.display = 'none';
                     document.getElementById('balanceStatementContent').style.display = 'none';
 
-                    // Filter expenses and funds to only include entries owned by the user or shared with them
-                    expenses = expenses.filter(expense => expense.ownerUserId === userId || (expense.sharedWith && expense.sharedWith.includes(userId)));
-                    funds = funds.filter(fund => fund.ownerUserId === userId || (fund.sharedWith && fund.sharedWith.includes(userId)));
+                    // Filter expenses and funds to only include entries with this sessionId
+                    expenses = expenses.filter(expense => expense.sessionId === sessionId);
+                    funds = funds.filter(fund => fund.sessionId === sessionId);
                 } else if (userRole === 'admin') {
                     // Show everything
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
                     document.getElementById('mainTabs').style.display = 'flex';
-                    document.getElementById('shareDataButton').style.display = 'inline-block'; // Show Share Data Button for Admins
                 }
             }
 
@@ -665,6 +621,10 @@
                     darkMode = true;
                     document.body.classList.add('dark-mode');
                 }
+            }
+
+            function generateSessionId() {
+                return 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             }
 
             function generateUniqueId() {
@@ -891,10 +851,11 @@
                 const userRole = sessionStorage.getItem('userRole');
                 let expense = { description, amount, date, category, subcategory };
 
-                expense.ownerUserId = userId; // Assign ownerUserId
+                if (userRole === 'dataentry') {
+                    expense.sessionId = sessionId;
+                }
 
                 expense.id = generateUniqueId();
-                expense.sharedWith = []; // Initialize sharedWith as empty array
                 expenses.push(expense);
 
                 localStorage.setItem('expenses', JSON.stringify(expenses));
@@ -928,10 +889,11 @@
                 const userRole = sessionStorage.getItem('userRole');
                 let fund = { description, amount, date, category, subcategory };
 
-                fund.ownerUserId = userId; // Assign ownerUserId
+                if (userRole === 'dataentry') {
+                    fund.sessionId = sessionId;
+                }
 
                 fund.id = generateUniqueId();
-                fund.sharedWith = []; // Initialize sharedWith as empty array
                 funds.push(fund);
 
                 localStorage.setItem('funds', JSON.stringify(funds));
@@ -1331,7 +1293,6 @@
                 tabs.forEach(tab => tab.classList.remove('active'));
                 element.classList.add('active');
 
-                // Hide all content areas
                 document.getElementById('expenseDashboardContent').style.display = 'none';
                 document.getElementById('fundsDashboardContent').style.display = 'none';
                 document.getElementById('reportContentSub').style.display = 'block';
@@ -1494,7 +1455,7 @@
                     const row = document.createElement('tr');
                     let actionButtons = '';
 
-                    if (userRole === 'admin' || (userRole === 'dataentry' && entry.ownerUserId === userId)) {
+                    if (userRole === 'admin' || (userRole === 'dataentry' && entry.sessionId === sessionId)) {
                         actionButtons = `
                             <td>
                                 <button class="btn btn-sm btn-danger" onclick="App.deleteEntry('${entryType}', '${entry.id}')">Delete</button>
@@ -1678,7 +1639,7 @@
                     const index = expenses.findIndex(expense => expense.id === id);
 
                     if (index !== -1) {
-                        if (userRole === 'dataentry' && expenses[index].ownerUserId !== userId) {
+                        if (userRole === 'dataentry' && expenses[index].sessionId !== sessionId) {
                             showToast('You can only delete your own entries.', 'danger');
                             return;
                         }
@@ -1695,7 +1656,7 @@
                     const index = funds.findIndex(fund => fund.id === id);
 
                     if (index !== -1) {
-                        if (userRole === 'dataentry' && funds[index].ownerUserId !== userId) {
+                        if (userRole === 'dataentry' && funds[index].sessionId !== sessionId) {
                             showToast('You can only delete your own entries.', 'danger');
                             return;
                         }
@@ -1931,12 +1892,6 @@
                                 if (!exp.id) {
                                     exp.id = generateUniqueId();
                                 }
-                                if (!exp.ownerUserId) {
-                                    exp.ownerUserId = 'user-1'; // Default to admin if not specified
-                                }
-                                if (!exp.sharedWith) {
-                                    exp.sharedWith = [];
-                                }
                                 // Check for duplicates based on unique ID
                                 if (!expenses.some(existing => existing.id === exp.id)) {
                                     expenses.push(exp);
@@ -1999,12 +1954,6 @@
                                 }
                                 if (!fund.id) {
                                     fund.id = generateUniqueId();
-                                }
-                                if (!fund.ownerUserId) {
-                                    fund.ownerUserId = 'user-1'; // Default to admin if not specified
-                                }
-                                if (!fund.sharedWith) {
-                                    fund.sharedWith = [];
                                 }
                                 // Check for duplicates based on unique ID
                                 if (!funds.some(existing => existing.id === fund.id)) {
@@ -2095,12 +2044,6 @@
                                 if (!exp.id) {
                                     exp.id = generateUniqueId();
                                 }
-                                if (!exp.ownerUserId) {
-                                    exp.ownerUserId = 'user-1'; // Default to admin if not specified
-                                }
-                                if (!exp.sharedWith) {
-                                    exp.sharedWith = [];
-                                }
                             });
                             expenses = restoredExpenses;
                             localStorage.setItem('expenses', JSON.stringify(expenses));
@@ -2120,12 +2063,6 @@
                                 fund.amount = parseFloat(fund.amount);
                                 if (!fund.id) {
                                     fund.id = generateUniqueId();
-                                }
-                                if (!fund.ownerUserId) {
-                                    fund.ownerUserId = 'user-1'; // Default to admin if not specified
-                                }
-                                if (!fund.sharedWith) {
-                                    fund.sharedWith = [];
                                 }
                             });
                             funds = restoredFunds;
@@ -2181,77 +2118,119 @@
                 }
             }
 
-            // Share Data Entries
-            function openShareDataModal() {
-                // Populate the share users select options excluding the current user
-                shareUsersSelect.innerHTML = '';
-                users.forEach(user => {
-                    if (user.id !== userId) { // Exclude current user
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.username;
-                        shareUsersSelect.appendChild(option);
+            // Group and Display Entries
+            function groupAndDisplayBalanceStatementEntries(entries, parentDiv, periodType) {
+                const groupedEntries = {};
+                let groupKey = '';
+
+                entries.forEach(entry => {
+                    if (periodType === 'Monthly') {
+                        groupKey = entry.date.substring(0, 7); // YYYY-MM
+                    } else if (periodType === 'Yearly') {
+                        groupKey = entry.date.substring(0, 4); // YYYY
                     }
-                });
-                shareDataModal.show();
-            }
 
-            function populateShareUsers() {
-                // This function populates the share users select options
-                // It is called during DOMContentLoaded
-                // Already handled in openShareDataModal
-            }
-
-            function shareDataEntries(event) {
-                event.preventDefault();
-                const selectedDate = shareDateInput.value;
-                const selectedUsers = Array.from(shareUsersSelect.selectedOptions).map(option => option.value);
-
-                if (!selectedDate) {
-                    showToast('Please select a date to share.', 'warning');
-                    return;
-                }
-                if (selectedUsers.length === 0) {
-                    showToast('Please select at least one user to share with.', 'warning');
-                    return;
-                }
-
-                // Share Expenses
-                expenses.forEach(expense => {
-                    if (expense.date === selectedDate && expense.ownerUserId === userId) {
-                        expense.sharedWith = Array.from(new Set([...expense.sharedWith, ...selectedUsers]));
-                    }
+                    if (!groupedEntries[groupKey]) groupedEntries[groupKey] = [];
+                    groupedEntries[groupKey].push(entry);
                 });
 
-                // Share Funds
-                funds.forEach(fund => {
-                    if (fund.date === selectedDate && fund.ownerUserId === userId) {
-                        fund.sharedWith = Array.from(new Set([...fund.sharedWith, ...selectedUsers]));
+                const sortedKeys = Object.keys(groupedEntries).sort((a, b) => new Date(a) - new Date(b));
+
+                sortedKeys.forEach(key => {
+                    createBalanceStatementSection(parentDiv, key, groupedEntries[key], periodType);
+                });
+            }
+
+            function createBalanceStatementSection(parentDiv, groupName, entriesList, periodType) {
+                if (entriesList.length === 0) return; // Skip if no entries in the group
+
+                // Create heading
+                const heading = document.createElement('h3');
+                heading.textContent = `${periodType}: ${groupName}`;
+                parentDiv.appendChild(heading);
+
+                // Create table
+                const table = document.createElement('table');
+                table.className = 'table table-striped';
+
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th>Type</th>
+                        <th>Category</th>
+                        <th>Subcategory</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Amount (Rs.)</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+
+                let totalFunds = 0;
+                let totalExpenses = 0;
+
+                entriesList.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${entry.type}</td>
+                        <td>${entry.category}</td>
+                        <td>${entry.subcategory || ''}</td>
+                        <td>${entry.description}</td>
+                        <td>${entry.date}</td>
+                        <td>${entry.amount.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+
+                    if (entry.type === 'Funds') {
+                        if (entry.category !== 'Loan Repayments') {
+                            totalFunds += entry.amount;
+                        }
+                    } else if (entry.type === 'Expense') {
+                        if (entry.category !== 'Loans Given' && entry.category !== 'Advances to Suppliers') {
+                            totalExpenses += entry.amount;
+                        }
                     }
                 });
 
-                localStorage.setItem('expenses', JSON.stringify(expenses));
-                localStorage.setItem('funds', JSON.stringify(funds));
+                table.appendChild(tbody);
 
-                shareDataModal.hide();
-                showToast('Data entries shared successfully.', 'success');
-                updateReport(); // Refresh reports to include shared data
+                const tfoot = document.createElement('tfoot');
+                const netTotal = totalFunds - totalExpenses;
+                tfoot.innerHTML = `
+                    <tr>
+                        <th colspan="4">Total Funds for ${periodType} ${groupName}</th>
+                        <th>Rs. ${totalFunds.toFixed(2)}</th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th colspan="4">Total Expenses for ${periodType} ${groupName}</th>
+                        <th>Rs. ${totalExpenses.toFixed(2)}</th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th colspan="4">Net Total for ${periodType} ${groupName}</th>
+                        <th>Rs. ${netTotal.toFixed(2)}</th>
+                        <th></th>
+                    </tr>
+                `;
+                table.appendChild(tfoot);
+
+                parentDiv.appendChild(table);
             }
 
-            // Update Tabs
-            // ... [Same as above functions: updateTabs]
+            // Generate PDF Reports
+            // ... [Same as above functions: generatePDF and generatePDFSub]
 
-            // Add Expense and Funds
-            // ... [Same as above functions: addExpense, addFunds]
+            // Import and Export Functions
+            // ... [Same as above functions: exportExpensesToExcel, exportFundsToExcel, importFromExcel, importFundsFromExcel]
 
-            // Update Expense Summary and Charts
-            // ... [Same as above functions: updateExpenseSummary, updateExpenseCharts]
+            // Backup and Restore Functions
+            // ... [Same as above functions: backupDatabase, restoreDatabase]
 
-            // Update Funds Summary and Charts
-            // ... [Same as above functions: updateFundsSummary, updateFundsCharts]
-
-            // Update Balance Statement
-            // ... [Same as above functions: updateBalanceStatementReport]
+            // Event Handlers for Confirmation Modal
+            // ... [Same as above functions: confirmReset, performConfirmedAction]
 
             // Utility Functions
             function getRandomColor() {
@@ -2276,9 +2255,7 @@
                 backupDatabase,
                 restoreDatabase,
                 confirmReset,
-                toggleDarkMode,
-                showSubTab, // Ensure this method is accessible
-                shareDataEntries // Expose shareDataEntries for external access
+                toggleDarkMode
             };
         })();
     </script>
