@@ -1,4 +1,167 @@
-<!-- Expense Entry Section -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Head Content -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIS Construction Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: 'Roboto', sans-serif;
+        }
+        .container {
+            margin-top: 20px;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .chart-container {
+            margin-top: 20px;
+            height: 400px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .btn-custom {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .btn-custom:hover {
+            background-color: #0b5ed7;
+        }
+        .category-tab {
+            /* Custom class for category tabs */
+        }
+        .period-selection {
+            margin-top: 15px;
+        }
+        .dark-mode {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        .dark-mode .container {
+            background-color: #1e1e1e;
+        }
+        .dark-mode .nav-tabs .nav-link {
+            color: #e0e0e0;
+        }
+        .dark-mode .nav-tabs .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .dark-mode .table {
+            color: #e0e0e0;
+        }
+        .search-bar {
+            margin-top: 15px;
+        }
+        .form-tooltip {
+            cursor: pointer;
+        }
+        /* Tooltip styling */
+        .tooltip-inner {
+            max-width: 200px;
+            padding: 8px;
+            color: #fff;
+            text-align: center;
+            background-color: #000;
+            border-radius: 4px;
+        }
+        /* Login Styles */
+        #loginContainer {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .login-button {
+            background-color: #0d6efd;
+            color: white;
+            width: 100%;
+        }
+        .login-button:hover {
+            background-color: #0b5ed7;
+        }
+        /* Summary Table */
+        .summary-table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+        }
+        .summary-table th, .summary-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .summary-table th {
+            background-color: #0d6efd;
+            color: white;
+        }
+        /* Align Export/Import Buttons */
+        .export-import-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Container -->
+    <div id="loginContainer" style="display: none;">
+        <h2 class="text-center">Login</h2>
+        <div class="form-group mt-4">
+            <label for="loginUsername">Username:</label>
+            <input type="text" id="loginUsername" class="form-control" placeholder="Enter username" aria-label="Username">
+        </div>
+        <div class="form-group mt-3">
+            <label for="loginPassword">Password:</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="Enter password" aria-label="Password">
+        </div>
+        <button class="btn login-button mt-4" onclick="login()" aria-label="Login">Login</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container" id="mainContent" style="display: none;" role="main">
+        <h1 class="text-center">SIS Construction Management System</h1>
+
+        <!-- Button Group -->
+        <div class="button-group">
+            <button class="btn btn-secondary toggle-darkmode" onclick="toggleDarkMode()" aria-label="Toggle Dark Mode">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button class="btn btn-secondary logout-button" onclick="logout()" aria-label="Logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+            <button class="btn btn-success backup-button admin-only" onclick="backupDatabase()" aria-label="Backup Database">
+                <i class="fas fa-download"></i> Backup Database
+            </button>
+            <button class="btn btn-warning restore-button admin-only" onclick="document.getElementById('restoreFileInput').click()" aria-label="Restore Database">
+                <i class="fas fa-upload"></i> Restore Database
+            </button>
+            <button class="btn btn-danger reset-button admin-only" onclick="confirmReset(event)" aria-label="Reset Data">
+                <i class="fas fa-sync-alt"></i> Reset Data
+            </button>
+        </div>
+        <input type="file" id="restoreFileInput" style="display: none;" onchange="restoreDatabase(event)" accept=".xlsx, .xls" aria-label="Restore File Input">
+
+        <!-- Expense Entry Section -->
         <div class="form-group row">
             <h3>Expense Entry</h3>
             <div class="col-md-3 position-relative">
@@ -47,3 +210,1705 @@
                 <button class="btn btn-custom w-100" onclick="addExpense()" aria-label="Add Expense"><i class="fas fa-plus"></i> Add Expense</button>
             </div>
         </div>
+
+        <!-- Export/Import Buttons for Expenses -->
+        <div class="export-import-buttons admin-only">
+            <button class="btn btn-custom" onclick="exportExpensesToExcel()" aria-label="Export Expenses to Excel"><i class="fas fa-file-excel"></i> Export Expenses to Excel</button>
+            <button class="btn btn-custom" onclick="document.getElementById('fileInput').click()" aria-label="Import Expenses from Excel"><i class="fas fa-file-import"></i> Import Expenses from Excel</button>
+            <input type="file" id="fileInput" style="display: none;" onchange="importFromExcel(event)" accept=".xlsx, .xls" aria-label="File Input">
+        </div>
+
+        <!-- Funds Entry Section -->
+        <div class="form-group row mt-4">
+            <h3>Funds Entry</h3>
+            <div class="col-md-3 position-relative">
+                <input type="text" id="fundsDescription" class="form-control" placeholder="Description" aria-label="Description">
+                <i class="fas fa-info-circle form-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Enter a brief description"></i>
+            </div>
+            <div class="col-md-2 position-relative">
+                <input type="number" id="fundsAmount" class="form-control" placeholder="Amount (Rs.)" aria-label="Amount">
+                <i class="fas fa-info-circle form-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Enter the amount in Rs."></i>
+            </div>
+            <div class="col-md-2 position-relative">
+                <input type="date" id="fundsDate" class="form-control" aria-label="Date">
+                <i class="fas fa-info-circle form-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Select the date of the funds"></i>
+            </div>
+            <div class="col-md-2 position-relative">
+                <select id="fundsCategory" class="form-control" aria-label="Category">
+                    <!-- Funds categories will be populated here -->
+                </select>
+                <i class="fas fa-info-circle form-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Select a category"></i>
+            </div>
+            <div class="col-md-3 position-relative">
+                <select id="fundsSubcategory" class="form-control" aria-label="Subcategory">
+                    <option value="">Select Subcategory</option>
+                </select>
+                <i class="fas fa-info-circle form-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Select a subcategory"></i>
+            </div>
+        </div>
+        <div class="form-group row mt-3">
+            <div class="col-md-3 position-relative">
+                <input type="text" id="newFundsCategory" class="form-control" placeholder="New Category" aria-label="New Category">
+                <i class="fas fa-info-circle form-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Add a new funds category"></i>
+            </div>
+            <div class="col-md-3 position-relative">
+                <input type="text" id="newFundsSubcategory" class="form-control" placeholder="New Subcategory" aria-label="New Subcategory">
+                <i class="fas fa-info-circle form-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="Add a new subcategory"></i>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-custom w-100" onclick="addFundsCategory()" aria-label="Add Funds Category"><i class="fas fa-plus-circle"></i> Add Funds Category</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-custom w-100" onclick="addFundsSubcategory()" aria-label="Add Funds Subcategory"><i class="fas fa-plus-circle"></i> Add Funds Subcategory</button>
+            </div>
+        </div>
+        <div class="form-group row mt-3">
+            <div class="col-md-12">
+                <button class="btn btn-custom w-100" onclick="addFunds()" aria-label="Add Funds"><i class="fas fa-plus"></i> Add Funds</button>
+            </div>
+        </div>
+
+        <!-- Export/Import Buttons for Funds -->
+        <div class="export-import-buttons admin-only">
+            <button class="btn btn-custom" onclick="exportFundsToExcel()" aria-label="Export Funds to Excel"><i class="fas fa-file-excel"></i> Export Funds to Excel</button>
+            <button class="btn btn-custom" onclick="document.getElementById('fundsFileInput').click()" aria-label="Import Funds from Excel"><i class="fas fa-file-import"></i> Import Funds from Excel</button>
+            <input type="file" id="fundsFileInput" style="display: none;" onchange="importFundsFromExcel(event)" accept=".xlsx, .xls" aria-label="Funds File Input">
+        </div>
+
+        <!-- Summary Section -->
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Funds Summary</th>
+                    <th>Expense Summary</th>
+                    <th>Net Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Rs. <span id="totalFunds">0.00</span></td>
+                    <td>Rs. <span id="total">0.00</span></td>
+                    <td>Rs. <span id="netBalance">0.00</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Search Bar -->
+        <div class="search-bar row">
+            <div class="col-md-6">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search..." onkeyup="updateReport()" aria-label="Search">
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mt-3" id="mainTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" onclick="showMainTab('expenseDashboard', this)" role="tab" aria-selected="true">Expense Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showMainTab('fundsDashboard', this)" role="tab" aria-selected="false">Funds Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showMainTab('balanceStatement', this)" role="tab" aria-selected="false">Balance Statement</a>
+            </li>
+        </ul>
+
+        <!-- Sub Tabs -->
+        <ul class="nav nav-tabs mt-3" id="subTabs" role="tablist">
+            <!-- Sub tabs will be added here -->
+        </ul>
+
+        <!-- Period Selection -->
+        <div class="row period-selection" id="periodSelection" style="display: none;">
+            <div class="col-md-3">
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" class="form-control" onchange="updateReport()" aria-label="Start Date">
+            </div>
+            <div class="col-md-3">
+                <label for="endDate">End Date:</label>
+                <input type="date" id="endDate" class="form-control" onchange="updateReport()" aria-label="End Date">
+            </div>
+        </div>
+
+        <!-- Content Areas -->
+        <div id="expenseDashboardContent" class="mt-3">
+            <div class="chart-container">
+                <canvas id="expenseDistribution" class="chart" aria-label="Expense Distribution Chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyExpensesChart" class="chart" aria-label="Monthly Expenses Chart"></canvas>
+            </div>
+        </div>
+
+        <div id="fundsDashboardContent" class="mt-3" style="display: none;">
+            <div class="chart-container">
+                <canvas id="fundsDistribution" class="chart" aria-label="Funds Distribution Chart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyFundsChart" class="chart" aria-label="Monthly Funds Chart"></canvas>
+            </div>
+        </div>
+
+        <div id="balanceStatementContent" class="mt-3" style="display: none;">
+            <!-- New Period Selection for Balance Statement -->
+            <div class="row period-selection" id="balanceStatementPeriodSelection">
+                <div class="col-md-3">
+                    <label for="balanceStatementPeriod">Group By:</label>
+                    <select id="balanceStatementPeriod" class="form-control" onchange="updateBalanceStatementReport()">
+                        <option value="Monthly">Monthly</option>
+                        <option value="Yearly">Yearly</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="balanceStatementChart" class="chart" aria-label="Balance Statement Chart"></canvas>
+            </div>
+            <div id="reportContent" class="mt-3">
+                <h2 id="reportTitle">Balance Statement Report</h2>
+                <div id="groupedReports">
+                    <!-- Grouped reports will be inserted here -->
+                </div>
+                <button class="btn btn-primary admin-only" onclick="generatePDF()" aria-label="Download PDF Report"><i class="fas fa-file-pdf"></i> Download PDF Report</button>
+            </div>
+        </div>
+
+        <div id="reportContentSub" class="mt-3" style="display: none;">
+            <h2 id="reportTitleSub"></h2>
+            <div id="groupedReportsSub">
+                <!-- Grouped reports will be inserted here -->
+            </div>
+            <button class="btn btn-primary admin-only" onclick="generatePDFSub()" aria-label="Download PDF Report"><i class="fas fa-file-pdf"></i> Download PDF Report</button>
+        </div>
+    </div>
+
+    <!-- External JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Bootstrap Bundle with Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome JS -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+
+    <!-- Application JavaScript -->
+    <script>
+        // Application State
+        let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+        let categories = JSON.parse(localStorage.getItem('categories')) || ['Loans Given', 'Advances to Suppliers'];
+        let subcategories = JSON.parse(localStorage.getItem('subcategories')) || {};
+
+        let funds = JSON.parse(localStorage.getItem('funds')) || [];
+        let fundsCategories = JSON.parse(localStorage.getItem('fundsCategories')) || ['Loan Repayments'];
+        let fundsSubcategories = JSON.parse(localStorage.getItem('fundsSubcategories')) || {};
+
+        let currentMainTab = 'expenseDashboard';
+        let currentSubTab = '';
+        let darkMode = false;
+        let sessionId = '';
+        let editingEntry = null;
+
+        const users = [
+            { username: 'admin', password: 'password123', role: 'admin' },
+            { username: 'dataentry', password: 'data123', role: 'dataentry' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+        });
+
+        function checkLoginStatus() {
+            const loggedIn = localStorage.getItem('loggedIn');
+            if (loggedIn === 'true') {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                const userRole = localStorage.getItem('userRole');
+                if (userRole === 'dataentry') {
+                    sessionId = generateSessionId();
+                    localStorage.setItem('sessionId', sessionId);
+                }
+                initializeApp();
+            } else {
+                document.getElementById('loginContainer').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('userRole', user.role);
+                checkLoginStatus();
+            } else {
+                alert('Invalid username or password.');
+            }
+        }
+
+        function logout() {
+            localStorage.setItem('loggedIn', 'false');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('sessionId');
+            location.reload();
+        }
+
+        function initializeApp() {
+            updateCategoryOptions();
+            updateFundsCategoryOptions();
+            updateTabs();
+            updateExpenseSummary();
+            updateFundsSummary();
+            updateExpenseCharts();
+            updateFundsCharts();
+            updateBalanceStatementChart();
+            initializeTooltips();
+            loadDarkModePreference();
+            adjustUIBasedOnRole();
+        }
+
+        function adjustUIBasedOnRole() {
+            const userRole = localStorage.getItem('userRole');
+
+            if (userRole === 'dataentry') {
+                sessionId = localStorage.getItem('sessionId');
+                // Hide admin-only elements
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                // Hide tabs
+                document.getElementById('mainTabs').style.display = 'none';
+                document.getElementById('subTabs').style.display = 'none';
+                document.getElementById('periodSelection').style.display = 'none';
+                document.getElementById('searchInput').style.display = 'none';
+
+                // Hide reports and charts
+                document.getElementById('expenseDashboardContent').style.display = 'none';
+                document.getElementById('fundsDashboardContent').style.display = 'none';
+                document.getElementById('balanceStatementContent').style.display = 'none';
+
+                // Filter expenses and funds to only include entries with this sessionId
+                expenses = expenses.filter(expense => expense.sessionId === sessionId);
+                funds = funds.filter(fund => fund.sessionId === sessionId);
+            } else if (userRole === 'admin') {
+                // Show everything
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                document.getElementById('mainTabs').style.display = 'flex';
+            }
+        }
+
+        function initializeTooltips() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'disabled');
+            }
+            updateExpenseCharts();
+            updateFundsCharts();
+            updateBalanceStatementChart();
+        }
+
+        function loadDarkModePreference() {
+            const darkModeSetting = localStorage.getItem('darkMode');
+            if (darkModeSetting === 'enabled') {
+                darkMode = true;
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        function generateSessionId() {
+            return 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function generateUniqueId() {
+            return 'id-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Expense Categories and Subcategories
+        function addCategory() {
+            const newCategory = document.getElementById('newCategory').value.trim();
+            if (newCategory && !categories.includes(newCategory)) {
+                categories.push(newCategory);
+                subcategories[newCategory] = [];
+                localStorage.setItem('categories', JSON.stringify(categories));
+                localStorage.setItem('subcategories', JSON.stringify(subcategories));
+                updateCategoryOptions();
+                updateTabs();
+                document.getElementById('newCategory').value = '';
+            } else {
+                alert('Category already exists or is invalid!');
+            }
+        }
+
+        function addSubcategory() {
+            const category = document.getElementById('category').value;
+            const newSubcategory = document.getElementById('newSubcategory').value.trim();
+            if (category && newSubcategory) {
+                if (!subcategories[category]) {
+                    subcategories[category] = [];
+                }
+                if (!subcategories[category].includes(newSubcategory)) {
+                    subcategories[category].push(newSubcategory);
+                    localStorage.setItem('subcategories', JSON.stringify(subcategories));
+                    updateSubcategoryOptions();
+                    document.getElementById('newSubcategory').value = '';
+                } else {
+                    alert('Subcategory already exists for this category!');
+                }
+            } else {
+                alert('Please select a category and enter a subcategory.');
+            }
+        }
+
+        function updateCategoryOptions() {
+            const categorySelect = document.getElementById('category');
+            categorySelect.innerHTML = '';
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+            updateSubcategoryOptions();
+            document.getElementById('category').addEventListener('change', updateSubcategoryOptions);
+        }
+
+        function updateSubcategoryOptions() {
+            const category = document.getElementById('category').value;
+            const subcategorySelect = document.getElementById('subcategory');
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            if (subcategories[category]) {
+                subcategories[category].forEach(subcat => {
+                    const option = document.createElement('option');
+                    option.value = subcat;
+                    option.textContent = subcat;
+                    subcategorySelect.appendChild(option);
+                });
+            }
+        }
+
+        // Funds Categories and Subcategories
+        function addFundsCategory() {
+            const newCategory = document.getElementById('newFundsCategory').value.trim();
+            if (newCategory && !fundsCategories.includes(newCategory)) {
+                fundsCategories.push(newCategory);
+                fundsSubcategories[newCategory] = [];
+                localStorage.setItem('fundsCategories', JSON.stringify(fundsCategories));
+                localStorage.setItem('fundsSubcategories', JSON.stringify(fundsSubcategories));
+                updateFundsCategoryOptions();
+                updateTabs();
+                document.getElementById('newFundsCategory').value = '';
+            } else {
+                alert('Funds category already exists or is invalid!');
+            }
+        }
+
+        function addFundsSubcategory() {
+            const category = document.getElementById('fundsCategory').value;
+            const newSubcategory = document.getElementById('newFundsSubcategory').value.trim();
+            if (category && newSubcategory) {
+                if (!fundsSubcategories[category]) {
+                    fundsSubcategories[category] = [];
+                }
+                if (!fundsSubcategories[category].includes(newSubcategory)) {
+                    fundsSubcategories[category].push(newSubcategory);
+                    localStorage.setItem('fundsSubcategories', JSON.stringify(fundsSubcategories));
+                    updateFundsSubcategoryOptions();
+                    document.getElementById('newFundsSubcategory').value = '';
+                } else {
+                    alert('Subcategory already exists for this category!');
+                }
+            } else {
+                alert('Please select a category and enter a subcategory.');
+            }
+        }
+
+        function updateFundsCategoryOptions() {
+            const categorySelect = document.getElementById('fundsCategory');
+            categorySelect.innerHTML = '';
+            fundsCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+            updateFundsSubcategoryOptions();
+            document.getElementById('fundsCategory').addEventListener('change', updateFundsSubcategoryOptions);
+        }
+
+        function updateFundsSubcategoryOptions() {
+            const category = document.getElementById('fundsCategory').value;
+            const subcategorySelect = document.getElementById('fundsSubcategory');
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            if (fundsSubcategories[category]) {
+                fundsSubcategories[category].forEach(subcat => {
+                    const option = document.createElement('option');
+                    option.value = subcat;
+                    option.textContent = subcat;
+                    subcategorySelect.appendChild(option);
+                });
+            }
+        }
+
+        // Update Tabs
+        function updateTabs() {
+            const subTabContainer = document.getElementById('subTabs');
+            // Remove existing category tabs
+            subTabContainer.innerHTML = '';
+
+            if (currentMainTab === 'expenseDashboard') {
+                // Expense Tabs
+                const categoriesTabs = ['Daily', 'Monthly', 'Yearly'].concat(categories);
+                categoriesTabs.forEach(category => {
+                    const tab = document.createElement('li');
+                    tab.className = 'nav-item category-tab';
+                    tab.innerHTML = `<a class="nav-link" href="#" onclick="showSubTab('${category}', this)" role="tab">${category}</a>`;
+                    subTabContainer.appendChild(tab);
+                });
+            } else if (currentMainTab === 'fundsDashboard') {
+                // Funds Tabs
+                const fundsTabs = ['Daily', 'Monthly', 'Yearly'].concat(fundsCategories);
+                fundsTabs.forEach(category => {
+                    const tab = document.createElement('li');
+                    tab.className = 'nav-item category-tab';
+                    tab.innerHTML = `<a class="nav-link" href="#" onclick="showSubTab('${category}', this)" role="tab">${category}</a>`;
+                    subTabContainer.appendChild(tab);
+                });
+            } else if (currentMainTab === 'balanceStatement') {
+                // Balance Statement does not have sub-tabs
+                subTabContainer.innerHTML = '';
+            }
+        }
+
+        // Add Expense
+        function addExpense() {
+            const description = document.getElementById('description').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const date = document.getElementById('date').value;
+            const category = document.getElementById('category').value;
+            const subcategory = document.getElementById('subcategory').value;
+
+            if (!description || isNaN(amount) || !date || !category) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const userRole = localStorage.getItem('userRole');
+            let expense = { description, amount, date, category, subcategory };
+
+            if (userRole === 'dataentry') {
+                expense.sessionId = sessionId;
+            }
+
+            expense.id = generateUniqueId();
+            expenses.push(expense);
+
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+
+            updateExpenseSummary();
+            updateExpenseCharts();
+            updateBalanceStatementChart();
+            updateReport();
+
+            // Clear input fields
+            document.getElementById('description').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('date').value = '';
+        }
+
+        // Add Funds
+        function addFunds() {
+            const description = document.getElementById('fundsDescription').value;
+            const amount = parseFloat(document.getElementById('fundsAmount').value);
+            const date = document.getElementById('fundsDate').value;
+            const category = document.getElementById('fundsCategory').value;
+            const subcategory = document.getElementById('fundsSubcategory').value;
+
+            if (!description || isNaN(amount) || !date || !category) {
+                alert('Please fill in all funds fields');
+                return;
+            }
+
+            const userRole = localStorage.getItem('userRole');
+            let fund = { description, amount, date, category, subcategory };
+
+            if (userRole === 'dataentry') {
+                fund.sessionId = sessionId;
+            }
+
+            fund.id = generateUniqueId();
+            funds.push(fund);
+
+            localStorage.setItem('funds', JSON.stringify(funds));
+
+            updateFundsSummary();
+            updateFundsCharts();
+            updateBalanceStatementChart();
+            updateReport();
+
+            // Clear input fields
+            document.getElementById('fundsDescription').value = '';
+            document.getElementById('fundsAmount').value = '';
+            document.getElementById('fundsDate').value = '';
+        }
+
+        // Update Expense Summary
+        function updateExpenseSummary() {
+            const totalExpenses = expenses
+                .filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers')
+                .reduce((sum, expense) => sum + expense.amount, 0);
+            document.getElementById('total').textContent = totalExpenses.toFixed(2);
+            updateNetBalance();
+        }
+
+        // Update Funds Summary
+        function updateFundsSummary() {
+            const totalFunds = funds
+                .filter(fund => fund.category !== 'Loan Repayments')
+                .reduce((sum, fund) => sum + fund.amount, 0);
+            document.getElementById('totalFunds').textContent = totalFunds.toFixed(2);
+            updateNetBalance();
+        }
+
+        // Update Net Balance
+        function updateNetBalance() {
+            const totalFunds = funds
+                .filter(fund => fund.category !== 'Loan Repayments')
+                .reduce((sum, fund) => sum + fund.amount, 0);
+            const totalExpenses = expenses
+                .filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers')
+                .reduce((sum, expense) => sum + expense.amount, 0);
+            const netBalance = totalFunds - totalExpenses;
+            document.getElementById('netBalance').textContent = netBalance.toFixed(2);
+        }
+
+        // Update Expense Charts
+        function updateExpenseCharts() {
+            updateExpenseDistributionChart();
+            updateMonthlyExpensesChart();
+        }
+
+        // Update Funds Charts
+        function updateFundsCharts() {
+            updateFundsDistributionChart();
+            updateMonthlyFundsChart();
+        }
+
+        // Expense Distribution Pie Chart
+        function updateExpenseDistributionChart() {
+            const filteredCategories = categories.filter(cat => cat !== 'Loans Given' && cat !== 'Advances to Suppliers');
+            const categoryAmounts = filteredCategories.map(cat => {
+                return expenses.filter(expense => expense.category === cat)
+                               .reduce((sum, expense) => sum + expense.amount, 0);
+            });
+
+            if (window.expensePieChart) {
+                window.expensePieChart.destroy();
+            }
+
+            const ctxDistribution = document.getElementById('expenseDistribution').getContext('2d');
+            window.expensePieChart = new Chart(ctxDistribution, {
+                type: 'pie',
+                data: {
+                    labels: filteredCategories,
+                    datasets: [{
+                        data: categoryAmounts,
+                        backgroundColor: filteredCategories.map(() => `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.7)`),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    const total = categoryAmounts.reduce((a, b) => a + b, 0);
+                                    const value = categoryAmounts[tooltipItem.dataIndex];
+                                    const percentage = ((value / total) * 100).toFixed(2);
+                                    return `${filteredCategories[tooltipItem.dataIndex]}: ${percentage}% (${value.toFixed(2)} Rs)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Funds Distribution Pie Chart
+        function updateFundsDistributionChart() {
+            const filteredCategories = fundsCategories.filter(cat => cat !== 'Loan Repayments');
+            const categoryAmounts = filteredCategories.map(cat => {
+                return funds.filter(fund => fund.category === cat)
+                               .reduce((sum, fund) => sum + fund.amount, 0);
+            });
+
+            if (window.fundsPieChart) {
+                window.fundsPieChart.destroy();
+            }
+
+            const ctxDistribution = document.getElementById('fundsDistribution').getContext('2d');
+            window.fundsPieChart = new Chart(ctxDistribution, {
+                type: 'pie',
+                data: {
+                    labels: filteredCategories,
+                    datasets: [{
+                        data: categoryAmounts,
+                        backgroundColor: filteredCategories.map(() => `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.7)`),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    const total = categoryAmounts.reduce((a, b) => a + b, 0);
+                                    const value = categoryAmounts[tooltipItem.dataIndex];
+                                    const percentage = ((value / total) * 100).toFixed(2);
+                                    return `${filteredCategories[tooltipItem.dataIndex]}: ${percentage}% (${value.toFixed(2)} Rs)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Monthly Expenses Bar Chart
+        function updateMonthlyExpensesChart() {
+            const filteredExpenses = expenses.filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers');
+            const monthlyExpenses = {};
+            filteredExpenses.forEach(expense => {
+                const dateObj = new Date(expense.date);
+                const month = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
+                if (!monthlyExpenses[month]) monthlyExpenses[month] = {};
+                if (!monthlyExpenses[month][expense.category]) monthlyExpenses[month][expense.category] = 0;
+                monthlyExpenses[month][expense.category] += expense.amount;
+            });
+
+            const months = Object.keys(monthlyExpenses).sort((a, b) => new Date(a) - new Date(b));
+            const datasets = categories
+                .filter(cat => cat !== 'Loans Given' && cat !== 'Advances to Suppliers')
+                .map(cat => ({
+                    label: cat,
+                    data: months.map(month => monthlyExpenses[month][cat] || 0),
+                    backgroundColor: `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.7)`
+                }));
+
+            if (window.expenseBarChart) {
+                window.expenseBarChart.destroy();
+            }
+
+            const ctxMonthly = document.getElementById('monthlyExpensesChart').getContext('2d');
+            window.expenseBarChart = new Chart(ctxMonthly, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Monthly Funds Bar Chart
+        function updateMonthlyFundsChart() {
+            const filteredFunds = funds.filter(fund => fund.category !== 'Loan Repayments');
+            const monthlyFunds = {};
+            filteredFunds.forEach(fund => {
+                const dateObj = new Date(fund.date);
+                const month = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
+                if (!monthlyFunds[month]) monthlyFunds[month] = {};
+                if (!monthlyFunds[month][fund.category]) monthlyFunds[month][fund.category] = 0;
+                monthlyFunds[month][fund.category] += fund.amount;
+            });
+
+            const months = Object.keys(monthlyFunds).sort((a, b) => new Date(a) - new Date(b));
+            const datasets = fundsCategories
+                .filter(cat => cat !== 'Loan Repayments')
+                .map(cat => ({
+                    label: cat,
+                    data: months.map(month => monthlyFunds[month][cat] || 0),
+                    backgroundColor: `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.7)`
+                }));
+
+            if (window.fundsBarChart) {
+                window.fundsBarChart.destroy();
+            }
+
+            const ctxMonthly = document.getElementById('monthlyFundsChart').getContext('2d');
+            window.fundsBarChart = new Chart(ctxMonthly, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: darkMode ? '#e0e0e0' : '#000'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Balance Statement Chart
+        function updateBalanceStatementChart() {
+            const monthlyData = {};
+
+            // Process funds
+            const filteredFunds = funds.filter(fund => fund.category !== 'Loan Repayments');
+            filteredFunds.forEach(fund => {
+                const dateObj = new Date(fund.date);
+                const month = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
+                if (!monthlyData[month]) monthlyData[month] = { funds: 0, expenses: 0 };
+                monthlyData[month].funds += fund.amount;
+            });
+
+            // Process expenses
+            const filteredExpenses = expenses.filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers');
+            filteredExpenses.forEach(expense => {
+                const dateObj = new Date(expense.date);
+                const month = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
+                if (!monthlyData[month]) monthlyData[month] = { funds: 0, expenses: 0 };
+                monthlyData[month].expenses += expense.amount;
+            });
+
+            const months = Object.keys(monthlyData).sort((a, b) => new Date(a) - new Date(b));
+            const netBalanceData = months.map(month => monthlyData[month].funds - monthlyData[month].expenses);
+
+            if (window.balanceStatementChartInstance) {
+                window.balanceStatementChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('balanceStatementChart').getContext('2d');
+            window.balanceStatementChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Net Balance',
+                            data: netBalanceData,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            fill: false,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: darkMode ? '#e0e0e0' : '#000',
+                            },
+                        },
+                        y: {
+                            ticks: {
+                                color: darkMode ? '#e0e0e0' : '#000',
+                            },
+                        },
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: darkMode ? '#e0e0e0' : '#000',
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        // Show Main Tab
+        function showMainTab(tabName, element) {
+            currentMainTab = tabName;
+            currentSubTab = '';
+            const tabs = document.querySelectorAll('#mainTabs .nav-link');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+
+            // Hide all content areas
+            document.getElementById('expenseDashboardContent').style.display = 'none';
+            document.getElementById('fundsDashboardContent').style.display = 'none';
+            document.getElementById('balanceStatementContent').style.display = 'none';
+            document.getElementById('reportContentSub').style.display = 'none';
+            document.getElementById('periodSelection').style.display = 'none';
+            document.getElementById('searchInput').value = '';
+
+            if (tabName === 'expenseDashboard') {
+                document.getElementById('expenseDashboardContent').style.display = 'block';
+                updateTabs();
+            } else if (tabName === 'fundsDashboard') {
+                document.getElementById('fundsDashboardContent').style.display = 'block';
+                updateTabs();
+            } else if (tabName === 'balanceStatement') {
+                document.getElementById('balanceStatementContent').style.display = 'block';
+                document.getElementById('periodSelection').style.display = 'flex';
+                updateBalanceStatementReport();
+            }
+        }
+
+        // Show Sub Tab
+        function showSubTab(tabName, element) {
+            currentSubTab = tabName;
+
+            const tabs = document.querySelectorAll('#subTabs .nav-link');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+
+            document.getElementById('expenseDashboardContent').style.display = 'none';
+            document.getElementById('fundsDashboardContent').style.display = 'none';
+            document.getElementById('reportContentSub').style.display = 'block';
+            document.getElementById('periodSelection').style.display = 'flex';
+
+            if (currentMainTab === 'expenseDashboard') {
+                document.getElementById('reportTitleSub').textContent = `Expense Report - ${tabName}`;
+                updateExpenseReport();
+            } else if (currentMainTab === 'fundsDashboard') {
+                document.getElementById('reportTitleSub').textContent = `Funds Report - ${tabName}`;
+                updateFundsReport();
+            }
+        }
+
+        function updateReport() {
+            if (currentMainTab === 'expenseDashboard') {
+                updateExpenseReport();
+            } else if (currentMainTab === 'fundsDashboard') {
+                updateFundsReport();
+            } else if (currentMainTab === 'balanceStatement') {
+                updateBalanceStatementReport();
+            }
+        }
+
+        function updateExpenseReport() {
+            const groupedReportsDiv = document.getElementById('groupedReportsSub');
+            groupedReportsDiv.innerHTML = ''; // Clear previous content
+
+            let filteredEntries = expenses;
+
+            // Filter entries based on selected period
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate) {
+                filteredEntries = filteredEntries.filter(entry => entry.date >= startDate);
+            }
+            if (endDate) {
+                filteredEntries = filteredEntries.filter(entry => entry.date <= endDate);
+            }
+
+            // Filter entries based on search input
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            if (searchQuery) {
+                filteredEntries = filteredEntries.filter(entry => {
+                    return (entry.description && entry.description.toLowerCase().includes(searchQuery)) ||
+                           (entry.category && entry.category.toLowerCase().includes(searchQuery)) ||
+                           (entry.subcategory && entry.subcategory.toLowerCase().includes(searchQuery)) ||
+                           entry.date.includes(searchQuery);
+                });
+            }
+
+            // Sort entries in ascending order of date
+            filteredEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (['Daily', 'Monthly', 'Yearly'].includes(currentSubTab)) {
+                groupAndDisplayEntries(filteredEntries, currentSubTab, groupedReportsDiv, 'Expense');
+            } else {
+                // Category report
+                filteredEntries = filteredEntries.filter(entry => entry.category === currentSubTab);
+                createReportSection(groupedReportsDiv, currentSubTab, filteredEntries, 'Category', 'Expense');
+            }
+        }
+
+        function updateFundsReport() {
+            const groupedReportsDiv = document.getElementById('groupedReportsSub');
+            groupedReportsDiv.innerHTML = ''; // Clear previous content
+
+            let filteredEntries = funds;
+
+            // Filter entries based on selected period
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate) {
+                filteredEntries = filteredEntries.filter(entry => entry.date >= startDate);
+            }
+            if (endDate) {
+                filteredEntries = filteredEntries.filter(entry => entry.date <= endDate);
+            }
+
+            // Filter entries based on search input
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            if (searchQuery) {
+                filteredEntries = filteredEntries.filter(entry => {
+                    return (entry.description && entry.description.toLowerCase().includes(searchQuery)) ||
+                           (entry.category && entry.category.toLowerCase().includes(searchQuery)) ||
+                           (entry.subcategory && entry.subcategory.toLowerCase().includes(searchQuery)) ||
+                           entry.date.includes(searchQuery);
+                });
+            }
+
+            // Sort entries in ascending order of date
+            filteredEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (['Daily', 'Monthly', 'Yearly'].includes(currentSubTab)) {
+                groupAndDisplayEntries(filteredEntries, currentSubTab, groupedReportsDiv, 'Funds');
+            } else {
+                // Category report
+                filteredEntries = filteredEntries.filter(entry => entry.category === currentSubTab);
+                createReportSection(groupedReportsDiv, currentSubTab, filteredEntries, 'Category', 'Funds');
+            }
+        }
+
+        function groupAndDisplayEntries(entries, periodType, parentDiv, entryType) {
+            let groupedEntries = {};
+            let groupKey = '';
+
+            entries.forEach(entry => {
+                if (periodType === 'Daily') {
+                    groupKey = entry.date;
+                } else if (periodType === 'Monthly') {
+                    groupKey = entry.date.substring(0, 7); // YYYY-MM
+                } else if (periodType === 'Yearly') {
+                    groupKey = entry.date.substring(0, 4); // YYYY
+                }
+
+                if (!groupedEntries[groupKey]) groupedEntries[groupKey] = [];
+                groupedEntries[groupKey].push(entry);
+            });
+
+            const sortedKeys = Object.keys(groupedEntries).sort((a, b) => new Date(a) - new Date(b));
+
+            sortedKeys.forEach(key => {
+                createReportSection(parentDiv, key, groupedEntries[key], periodType, entryType);
+            });
+        }
+
+        function createReportSection(parentDiv, groupName, entriesList, groupType, entryType) {
+            if (entriesList.length === 0) return; // Skip if no entries in the group
+
+            // Create heading
+            const heading = document.createElement('h3');
+            heading.textContent = `${groupType}: ${groupName}`;
+            parentDiv.appendChild(heading);
+
+            // Create table
+            const table = document.createElement('table');
+            table.className = 'table table-striped';
+
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Amount (Rs.)</th>
+                    <th>Actions</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+
+            let totalAmount = 0;
+            const userRole = localStorage.getItem('userRole');
+
+            entriesList.forEach(entry => {
+                const row = document.createElement('tr');
+                let actionButtons = '';
+
+                if (userRole === 'admin' || (userRole === 'dataentry' && entry.sessionId === sessionId)) {
+                    actionButtons = `
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteEntry('${entryType}', '${entry.id}')">Delete</button>
+                        </td>
+                    `;
+                } else {
+                    actionButtons = '<td></td>';
+                }
+
+                row.innerHTML = `
+                    <td>${entry.category}</td>
+                    <td>${entry.subcategory || ''}</td>
+                    <td>${entry.description}</td>
+                    <td>${entry.date}</td>
+                    <td>${entry.amount.toFixed(2)}</td>
+                    ${actionButtons}
+                `;
+                tbody.appendChild(row);
+
+                totalAmount += entry.amount;
+            });
+
+            table.appendChild(tbody);
+
+            const tfoot = document.createElement('tfoot');
+            tfoot.innerHTML = `
+                <tr>
+                    <th colspan="5">Total ${entryType} for ${groupType} ${groupName}</th>
+                    <th>Rs. ${totalAmount.toFixed(2)}</th>
+                </tr>
+            `;
+            table.appendChild(tfoot);
+
+            parentDiv.appendChild(table);
+        }
+
+        function updateBalanceStatementReport() {
+            const groupedReportsDiv = document.getElementById('groupedReports');
+            groupedReportsDiv.innerHTML = ''; // Clear previous content
+
+            let filteredEntries = expenses.map(expense => ({ ...expense, type: 'Expense' }))
+                .concat(funds.map(fund => ({ ...fund, type: 'Funds' })));
+
+            // Filter entries based on selected period
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate) {
+                filteredEntries = filteredEntries.filter(entry => entry.date >= startDate);
+            }
+            if (endDate) {
+                filteredEntries = filteredEntries.filter(entry => entry.date <= endDate);
+            }
+
+            // Filter entries based on search input
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            if (searchQuery) {
+                filteredEntries = filteredEntries.filter(entry => {
+                    return (entry.description && entry.description.toLowerCase().includes(searchQuery)) ||
+                           (entry.category && entry.category.toLowerCase().includes(searchQuery)) ||
+                           (entry.subcategory && entry.subcategory.toLowerCase().includes(searchQuery)) ||
+                           entry.date.includes(searchQuery) ||
+                           entry.type.toLowerCase().includes(searchQuery);
+                });
+            }
+
+            // Sort entries in ascending order of date
+            filteredEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const periodType = document.getElementById('balanceStatementPeriod').value;
+
+            groupAndDisplayBalanceStatementEntries(filteredEntries, groupedReportsDiv, periodType);
+        }
+
+        function groupAndDisplayBalanceStatementEntries(entries, parentDiv, periodType) {
+            const groupedEntries = {};
+            let groupKey = '';
+
+            entries.forEach(entry => {
+                if (periodType === 'Monthly') {
+                    groupKey = entry.date.substring(0, 7); // YYYY-MM
+                } else if (periodType === 'Yearly') {
+                    groupKey = entry.date.substring(0, 4); // YYYY
+                }
+
+                if (!groupedEntries[groupKey]) groupedEntries[groupKey] = [];
+                groupedEntries[groupKey].push(entry);
+            });
+
+            const sortedKeys = Object.keys(groupedEntries).sort((a, b) => new Date(a) - new Date(b));
+
+            sortedKeys.forEach(key => {
+                createBalanceStatementSection(parentDiv, key, groupedEntries[key], periodType);
+            });
+        }
+
+        function createBalanceStatementSection(parentDiv, groupName, entriesList, periodType) {
+            if (entriesList.length === 0) return; // Skip if no entries in the group
+
+            // Create heading
+            const heading = document.createElement('h3');
+            heading.textContent = `${periodType}: ${groupName}`;
+            parentDiv.appendChild(heading);
+
+            // Create table
+            const table = document.createElement('table');
+            table.className = 'table table-striped';
+
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Amount (Rs.)</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+
+            let totalFunds = 0;
+            let totalExpenses = 0;
+
+            entriesList.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.type}</td>
+                    <td>${entry.category}</td>
+                    <td>${entry.subcategory || ''}</td>
+                    <td>${entry.description}</td>
+                    <td>${entry.date}</td>
+                    <td>${entry.amount.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+
+                if (entry.type === 'Funds') {
+                    if (entry.category !== 'Loan Repayments') {
+                        totalFunds += entry.amount;
+                    }
+                } else if (entry.type === 'Expense') {
+                    if (entry.category !== 'Loans Given' && entry.category !== 'Advances to Suppliers') {
+                        totalExpenses += entry.amount;
+                    }
+                }
+            });
+
+            table.appendChild(tbody);
+
+            const tfoot = document.createElement('tfoot');
+            const netTotal = totalFunds - totalExpenses;
+            tfoot.innerHTML = `
+                <tr>
+                    <th colspan="5">Total Funds for ${periodType} ${groupName}</th>
+                    <th>Rs. ${totalFunds.toFixed(2)}</th>
+                </tr>
+                <tr>
+                    <th colspan="5">Total Expenses for ${periodType} ${groupName}</th>
+                    <th>Rs. ${totalExpenses.toFixed(2)}</th>
+                </tr>
+                <tr>
+                    <th colspan="5">Net Total for ${periodType} ${groupName}</th>
+                    <th>Rs. ${netTotal.toFixed(2)}</th>
+                </tr>
+            `;
+            table.appendChild(tfoot);
+
+            parentDiv.appendChild(table);
+        }
+
+        function deleteEntry(entryType, id) {
+            const userRole = localStorage.getItem('userRole');
+
+            if (entryType === 'Expense') {
+                const index = expenses.findIndex(expense => expense.id === id);
+
+                if (index !== -1) {
+                    if (userRole === 'dataentry' && expenses[index].sessionId !== sessionId) {
+                        alert('You can only delete your own entries.');
+                        return;
+                    }
+
+                    expenses.splice(index, 1);
+                    localStorage.setItem('expenses', JSON.stringify(expenses));
+                    updateExpenseSummary();
+                    updateExpenseCharts();
+                    updateReport();
+                }
+            } else if (entryType === 'Funds') {
+                const index = funds.findIndex(fund => fund.id === id);
+
+                if (index !== -1) {
+                    if (userRole === 'dataentry' && funds[index].sessionId !== sessionId) {
+                        alert('You can only delete your own entries.');
+                        return;
+                    }
+
+                    funds.splice(index, 1);
+                    localStorage.setItem('funds', JSON.stringify(funds));
+                    updateFundsSummary();
+                    updateFundsCharts();
+                    updateReport();
+                }
+            }
+        }
+
+        // Generate PDF for Balance Statement Report
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const reportTitle = document.getElementById('reportTitle').textContent;
+            const groupedReportsDiv = document.getElementById('groupedReports');
+
+            // Add system name and title
+            doc.setFontSize(18);
+            doc.text('SIS Construction Management System', 14, 20);
+            doc.setFontSize(16);
+            doc.text(reportTitle, 14, 30);
+
+            // Add date range if applicable
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (startDate || endDate) {
+                doc.setFontSize(12);
+                doc.text(`Date Range: ${startDate || 'N/A'} to ${endDate || 'N/A'}`, 14, 38);
+            }
+
+            let yPosition = 46;
+
+            const sections = groupedReportsDiv.children;
+            for (let i = 0; i < sections.length; i += 2) {
+                const heading = sections[i].textContent;
+                const table = sections[i + 1];
+
+                doc.setFontSize(14);
+                doc.text(heading, 14, yPosition);
+                yPosition += 6;
+
+                // Extract table data
+                const tableData = [];
+                const headers = [];
+                const tableRows = table.querySelectorAll('tr');
+
+                tableRows.forEach((row, index) => {
+                    const rowData = [];
+                    row.querySelectorAll('th:not(:last-child), td:not(:last-child)').forEach(cell => {
+                        rowData.push(cell.innerText);
+                    });
+                    if (index === 0) {
+                        headers.push(...rowData);
+                    } else {
+                        tableData.push(rowData);
+                    }
+                });
+
+                doc.autoTable({
+                    startY: yPosition,
+                    head: [headers],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [41, 128, 185] },
+                    styles: { fontSize: 10 },
+                    margin: { left: 14, right: 14 },
+                });
+
+                yPosition = doc.previousAutoTable.finalY + 10;
+
+                // Add new page if necessary
+                if (yPosition > 270 && i + 2 < sections.length) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+            }
+
+            doc.save('Balance_Statement_Report.pdf');
+        }
+
+        // Generate PDF for Sub Reports (Expense or Funds)
+        function generatePDFSub() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const reportTitle = document.getElementById('reportTitleSub').textContent;
+            const groupedReportsDiv = document.getElementById('groupedReportsSub');
+
+            // Add system name and title
+            doc.setFontSize(18);
+            doc.text('SIS Construction Management System', 14, 20);
+            doc.setFontSize(16);
+            doc.text(reportTitle, 14, 30);
+
+            // Add date range if applicable
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (startDate || endDate) {
+                doc.setFontSize(12);
+                doc.text(`Date Range: ${startDate || 'N/A'} to ${endDate || 'N/A'}`, 14, 38);
+            }
+
+            let yPosition = 46;
+
+            const sections = groupedReportsDiv.children;
+            for (let i = 0; i < sections.length; i += 2) {
+                const heading = sections[i].textContent;
+                const table = sections[i + 1];
+
+                doc.setFontSize(14);
+                doc.text(heading, 14, yPosition);
+                yPosition += 6;
+
+                // Extract table data
+                const tableData = [];
+                const headers = [];
+                const tableRows = table.querySelectorAll('tr');
+
+                tableRows.forEach((row, index) => {
+                    const rowData = [];
+                    row.querySelectorAll('th:not(:last-child), td:not(:last-child)').forEach(cell => {
+                        rowData.push(cell.innerText);
+                    });
+                    if (index === 0) {
+                        headers.push(...rowData);
+                    } else {
+                        tableData.push(rowData);
+                    }
+                });
+
+                doc.autoTable({
+                    startY: yPosition,
+                    head: [headers],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [41, 128, 185] },
+                    styles: { fontSize: 10 },
+                    margin: { left: 14, right: 14 },
+                });
+
+                yPosition = doc.previousAutoTable.finalY + 10;
+
+                // Add new page if necessary
+                if (yPosition > 270 && i + 2 < sections.length) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+            }
+
+            const fileName = reportTitle.replace(/\s+/g, '_') + '.pdf';
+            doc.save(fileName);
+        }
+
+        function exportExpensesToExcel() {
+            const wsExpenses = XLSX.utils.json_to_sheet(expenses);
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsExpenses, "Expenses");
+
+            XLSX.writeFile(wb, "expenses.xlsx");
+        }
+
+        function exportFundsToExcel() {
+            const wsFunds = XLSX.utils.json_to_sheet(funds);
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsFunds, "Funds");
+
+            XLSX.writeFile(wb, "funds.xlsx");
+        }
+
+        function excelDateToJSDate(serial) {
+            const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+            const isoDateString = date.toISOString();
+            return isoDateString.split('T')[0]; // Format: YYYY-MM-DD
+        }
+
+        function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+
+                    // Import Expenses
+                    const expenseSheet = workbook.Sheets["Expenses"];
+                    if (expenseSheet) {
+                        const importedExpenses = XLSX.utils.sheet_to_json(expenseSheet);
+
+                        // Process imported expenses
+                        importedExpenses.forEach(exp => {
+                            if (typeof exp.date === 'number') {
+                                exp.date = excelDateToJSDate(exp.date);
+                            }
+                            exp.amount = parseFloat(exp.amount);
+                            if (!categories.includes(exp.category)) {
+                                categories.push(exp.category);
+                            }
+                            if (exp.subcategory) {
+                                if (!subcategories[exp.category]) {
+                                    subcategories[exp.category] = [];
+                                }
+                                if (!subcategories[exp.category].includes(exp.subcategory)) {
+                                    subcategories[exp.category].push(exp.subcategory);
+                                }
+                            }
+                            if (!exp.id) {
+                                exp.id = generateUniqueId();
+                            }
+                        });
+
+                        expenses = expenses.concat(importedExpenses);
+                        localStorage.setItem('expenses', JSON.stringify(expenses));
+                        localStorage.setItem('categories', JSON.stringify(categories));
+                        localStorage.setItem('subcategories', JSON.stringify(subcategories));
+
+                        updateCategoryOptions();
+                        updateTabs();
+                        updateExpenseSummary();
+                        updateExpenseCharts();
+                        updateBalanceStatementChart();
+                    } else {
+                        alert("No 'Expenses' sheet found in the Excel file.");
+                    }
+                };
+                reader.readAsBinaryString(file);
+            }
+        }
+
+        function importFundsFromExcel(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+
+                    // Import Funds
+                    const fundsSheet = workbook.Sheets["Funds"];
+                    if (fundsSheet) {
+                        const importedFunds = XLSX.utils.sheet_to_json(fundsSheet);
+
+                        // Process imported funds
+                        importedFunds.forEach(fund => {
+                            if (typeof fund.date === 'number') {
+                                fund.date = excelDateToJSDate(fund.date);
+                            }
+                            fund.amount = parseFloat(fund.amount);
+                            if (!fundsCategories.includes(fund.category)) {
+                                fundsCategories.push(fund.category);
+                            }
+                            if (fund.subcategory) {
+                                if (!fundsSubcategories[fund.category]) {
+                                    fundsSubcategories[fund.category] = [];
+                                }
+                                if (!fundsSubcategories[fund.category].includes(fund.subcategory)) {
+                                    fundsSubcategories[fund.category].push(fund.subcategory);
+                                }
+                            }
+                            if (!fund.id) {
+                                fund.id = generateUniqueId();
+                            }
+                        });
+
+                        funds = funds.concat(importedFunds);
+                        localStorage.setItem('funds', JSON.stringify(funds));
+                        localStorage.setItem('fundsCategories', JSON.stringify(fundsCategories));
+                        localStorage.setItem('fundsSubcategories', JSON.stringify(fundsSubcategories));
+
+                        updateFundsCategoryOptions();
+                        updateTabs();
+                        updateFundsSummary();
+                        updateFundsCharts();
+                        updateBalanceStatementChart();
+                    } else {
+                        alert("No 'Funds' sheet found in the Excel file.");
+                    }
+                };
+                reader.readAsBinaryString(file);
+            }
+        }
+
+        function confirmReset(event) {
+            if (event.ctrlKey) {
+                if (confirm("Are you sure you want to reset all data? This action cannot be undone.")) {
+                    resetData();
+                }
+            } else {
+                alert("Press Ctrl + Click to confirm reset.");
+            }
+        }
+
+        function resetData() {
+            localStorage.removeItem('expenses');
+            localStorage.removeItem('categories');
+            localStorage.removeItem('subcategories');
+            localStorage.removeItem('funds');
+            localStorage.removeItem('fundsCategories');
+            localStorage.removeItem('fundsSubcategories');
+            expenses = [];
+            categories = ['Loans Given', 'Advances to Suppliers'];
+            subcategories = {};
+            funds = [];
+            fundsCategories = ['Loan Repayments'];
+            fundsSubcategories = {};
+            updateCategoryOptions();
+            updateFundsCategoryOptions();
+            updateTabs();
+            updateExpenseSummary();
+            updateFundsSummary();
+            updateExpenseCharts();
+            updateFundsCharts();
+            updateBalanceStatementChart();
+        }
+
+        // Backup Database Function
+        function backupDatabase() {
+            const wsExpenses = XLSX.utils.json_to_sheet(expenses);
+            const wsFunds = XLSX.utils.json_to_sheet(funds);
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsExpenses, "Expenses");
+            XLSX.utils.book_append_sheet(wb, wsFunds, "Funds");
+
+            XLSX.writeFile(wb, "database_backup.xlsx");
+        }
+
+        // Restore Database Function
+        function restoreDatabase(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+
+                    // Restore Expenses
+                    const expenseSheet = workbook.Sheets["Expenses"];
+                    if (expenseSheet) {
+                        const restoredExpenses = XLSX.utils.sheet_to_json(expenseSheet);
+                        restoredExpenses.forEach(exp => {
+                            if (typeof exp.date === 'number') {
+                                exp.date = excelDateToJSDate(exp.date);
+                            }
+                            exp.amount = parseFloat(exp.amount);
+                            if (!exp.id) {
+                                exp.id = generateUniqueId();
+                            }
+                        });
+                        expenses = restoredExpenses;
+                        localStorage.setItem('expenses', JSON.stringify(expenses));
+                    } else {
+                        alert("No 'Expenses' sheet found in the backup file.");
+                        return;
+                    }
+
+                    // Restore Funds
+                    const fundsSheet = workbook.Sheets["Funds"];
+                    if (fundsSheet) {
+                        const restoredFunds = XLSX.utils.sheet_to_json(fundsSheet);
+                        restoredFunds.forEach(fund => {
+                            if (typeof fund.date === 'number') {
+                                fund.date = excelDateToJSDate(fund.date);
+                            }
+                            fund.amount = parseFloat(fund.amount);
+                            if (!fund.id) {
+                                fund.id = generateUniqueId();
+                            }
+                        });
+                        funds = restoredFunds;
+                        localStorage.setItem('funds', JSON.stringify(funds));
+                    } else {
+                        alert("No 'Funds' sheet found in the backup file.");
+                        return;
+                    }
+
+                    // Restore Categories and Subcategories
+                    categories = [...new Set(expenses.map(exp => exp.category))];
+                    subcategories = {};
+                    expenses.forEach(exp => {
+                        if (exp.subcategory) {
+                            if (!subcategories[exp.category]) {
+                                subcategories[exp.category] = [];
+                            }
+                            if (!subcategories[exp.category].includes(exp.subcategory)) {
+                                subcategories[exp.category].push(exp.subcategory);
+                            }
+                        }
+                    });
+                    fundsCategories = [...new Set(funds.map(fund => fund.category))];
+                    fundsSubcategories = {};
+                    funds.forEach(fund => {
+                        if (fund.subcategory) {
+                            if (!fundsSubcategories[fund.category]) {
+                                fundsSubcategories[fund.category] = [];
+                            }
+                            if (!fundsSubcategories[fund.category].includes(fund.subcategory)) {
+                                fundsSubcategories[fund.category].push(fund.subcategory);
+                            }
+                        }
+                    });
+                    localStorage.setItem('categories', JSON.stringify(categories));
+                    localStorage.setItem('subcategories', JSON.stringify(subcategories));
+                    localStorage.setItem('fundsCategories', JSON.stringify(fundsCategories));
+                    localStorage.setItem('fundsSubcategories', JSON.stringify(fundsSubcategories));
+
+                    // Update the UI
+                    updateCategoryOptions();
+                    updateFundsCategoryOptions();
+                    updateTabs();
+                    updateExpenseSummary();
+                    updateFundsSummary();
+                    updateExpenseCharts();
+                    updateFundsCharts();
+                    updateBalanceStatementChart();
+
+                    alert("Database restored successfully!");
+                };
+                reader.readAsBinaryString(file);
+            }
+        }
+    </script>
+</body>
+</html>
