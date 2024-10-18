@@ -154,6 +154,40 @@
       </div>
     </div>
 
+    <!-- Password Reset Modal -->
+    <div class="modal fade" id="passwordResetModal" tabindex="-1" aria-labelledby="passwordResetModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="passwordResetModalLabel">Reset User Password</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="passwordResetForm">
+              <div class="mb-3">
+                <label for="resetUsername" class="form-label">Select User:</label>
+                <select id="resetUsername" class="form-select" required>
+                  <!-- Options will be dynamically populated -->
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="newPassword" class="form-label">New Password:</label>
+                <input type="password" id="newPassword" class="form-control" placeholder="Enter new password" required>
+              </div>
+              <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm New Password:</label>
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm new password" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="submitPasswordResetButton">Reset Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Login Container -->
     <div id="loginContainer">
         <h2 class="text-center">Login</h2>
@@ -180,6 +214,14 @@
             <button class="btn btn-secondary logout-button" id="logoutButton" aria-label="Logout">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
+            <!-- Export Buttons for Data Entry Users -->
+            <button class="btn btn-primary" id="exportDataEntryExpensesButton" aria-label="Export Expenses">
+                <i class="fas fa-file-excel"></i> Export Expenses
+            </button>
+            <button class="btn btn-primary" id="exportDataEntryFundsButton" aria-label="Export Funds">
+                <i class="fas fa-file-excel"></i> Export Funds
+            </button>
+            <!-- Admin-Only Buttons -->
             <button class="btn btn-success backup-button admin-only" id="backupButton" aria-label="Backup Database">
                 <i class="fas fa-download"></i> Backup Database
             </button>
@@ -188,6 +230,9 @@
             </button>
             <button class="btn btn-danger reset-button admin-only" id="resetButton" aria-label="Reset Data">
                 <i class="fas fa-sync-alt"></i> Reset Data
+            </button>
+            <button class="btn btn-info reset-password-button admin-only" id="resetPasswordButton" aria-label="Reset Password">
+                <i class="fas fa-key"></i> Reset Password
             </button>
         </div>
         <input type="file" id="restoreFileInput" style="display: none;" accept=".xlsx, .xls" aria-label="Restore File Input">
@@ -242,7 +287,7 @@
             </div>
         </div>
 
-        <!-- Export/Import Buttons for Expenses -->
+        <!-- Export/Import Buttons for Expenses (Admin Only) -->
         <div class="export-import-buttons admin-only">
             <button class="btn btn-custom" id="exportExpensesButton" aria-label="Export Expenses to Excel"><i class="fas fa-file-excel"></i> Export Expenses to Excel</button>
             <button class="btn btn-custom" id="importExpensesButton" aria-label="Import Expenses from Excel"><i class="fas fa-file-import"></i> Import Expenses from Excel</button>
@@ -299,7 +344,7 @@
             </div>
         </div>
 
-        <!-- Export/Import Buttons for Funds -->
+        <!-- Export/Import Buttons for Funds (Admin Only) -->
         <div class="export-import-buttons admin-only">
             <button class="btn btn-custom" id="exportFundsButton" aria-label="Export Funds to Excel"><i class="fas fa-file-excel"></i> Export Funds to Excel</button>
             <button class="btn btn-custom" id="importFundsButton" aria-label="Import Funds from Excel"><i class="fas fa-file-import"></i> Import Funds from Excel</button>
@@ -307,7 +352,7 @@
         </div>
 
         <!-- Summary Section -->
-        <table class="summary-table">
+        <table class="summary-table" id="summarySection">
             <thead>
                 <tr>
                     <th>Funds Summary</th>
@@ -428,23 +473,48 @@
         const App = (function() {
             // Application State
             let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-            let categories = JSON.parse(localStorage.getItem('categories')) || ['Loans Given', 'Advances to Suppliers'];
+            let categories = JSON.parse(localStorage.getItem('categories')) || [
+                'Bricks',
+                'Sand',
+                'Crush',
+                'Steel',
+                'Cement',
+                'Gravel',
+                'Bajjar',
+                'Labour',
+                'Contractor',
+                'Electrical',
+                'Plumbing',
+                'Hardwear items',
+                'Paint',
+                'Consultant fee',
+                'Fule',
+                'Tiles',
+                'Windows and doors',
+                'Plantation',
+                'Loan',
+                'Misleanious'
+            ];
             let subcategories = JSON.parse(localStorage.getItem('subcategories')) || {};
 
             let funds = JSON.parse(localStorage.getItem('funds')) || [];
-            let fundsCategories = JSON.parse(localStorage.getItem('fundsCategories')) || ['Loan Repayments'];
+            let fundsCategories = JSON.parse(localStorage.getItem('fundsCategories')) || [
+                'Loan',
+                'Gift',
+                'Seed money'
+            ];
             let fundsSubcategories = JSON.parse(localStorage.getItem('fundsSubcategories')) || {};
+
+            let users = JSON.parse(localStorage.getItem('users')) || [
+                { username: 'admin', password: 'password123', role: 'admin' },
+                { username: 'dataentry', password: 'data123', role: 'dataentry' }
+            ];
 
             let currentMainTab = 'expenseDashboard';
             let currentSubTab = '';
             let darkMode = false;
             let sessionId = '';
             let editingEntry = null;
-
-            const users = [
-                { username: 'admin', password: 'password123', role: 'admin' },
-                { username: 'dataentry', password: 'data123', role: 'dataentry' }
-            ];
 
             // Cached DOM Elements
             const loginContainer = document.getElementById('loginContainer');
@@ -471,12 +541,23 @@
             const restoreButton = document.getElementById('restoreButton');
             const restoreFileInput = document.getElementById('restoreFileInput');
             const resetButton = document.getElementById('resetButton');
+            const resetPasswordButton = document.getElementById('resetPasswordButton');
 
             const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
             const confirmationModalBody = document.getElementById('confirmationModalBody');
             const confirmActionButton = document.getElementById('confirmActionButton');
 
+            const passwordResetModal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
+            const resetUsernameSelect = document.getElementById('resetUsername');
+            const submitPasswordResetButton = document.getElementById('submitPasswordResetButton');
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+
             const toastContainer = document.getElementById('toastContainer');
+
+            // Cached Export Buttons for Data Entry Users
+            const exportDataEntryExpensesButton = document.getElementById('exportDataEntryExpensesButton');
+            const exportDataEntryFundsButton = document.getElementById('exportDataEntryFundsButton');
 
             // Event Listeners
             document.addEventListener('DOMContentLoaded', () => {
@@ -509,6 +590,14 @@
                 restoreFileInput.addEventListener('change', restoreDatabase);
                 resetButton.addEventListener('click', confirmReset);
                 confirmActionButton.addEventListener('click', performConfirmedAction);
+
+                // Export Buttons for Data Entry Users
+                exportDataEntryExpensesButton.addEventListener('click', exportExpensesToExcel);
+                exportDataEntryFundsButton.addEventListener('click', exportFundsToExcel);
+
+                // Password Reset Button
+                resetPasswordButton.addEventListener('click', openPasswordResetModal);
+                submitPasswordResetButton.addEventListener('click', handlePasswordReset);
             }
 
             function checkLoginStatus() {
@@ -583,13 +672,31 @@
                     document.getElementById('fundsDashboardContent').style.display = 'none';
                     document.getElementById('balanceStatementContent').style.display = 'none';
 
-                    // Filter expenses and funds to only include entries with this sessionId
-                    expenses = expenses.filter(expense => expense.sessionId === sessionId);
-                    funds = funds.filter(fund => fund.sessionId === sessionId);
+                    // Hide Summary Section
+                    document.getElementById('summarySection').style.display = 'none';
+
+                    // Show export buttons for dataentry users
+                    exportDataEntryExpensesButton.style.display = 'inline-block';
+                    exportDataEntryFundsButton.style.display = 'inline-block';
+
+                    // Hide export buttons for admin users
+                    exportExpensesButton.style.display = 'none';
+                    exportFundsButton.style.display = 'none';
                 } else if (userRole === 'admin') {
-                    // Show everything
+                    // Show admin-only elements
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    // Show tabs
                     document.getElementById('mainTabs').style.display = 'flex';
+                    // Show Summary Section
+                    document.getElementById('summarySection').style.display = 'table';
+
+                    // Hide export buttons for dataentry users
+                    exportDataEntryExpensesButton.style.display = 'none';
+                    exportDataEntryFundsButton.style.display = 'none';
+
+                    // Show export buttons for admin users
+                    exportExpensesButton.style.display = 'inline-block';
+                    exportFundsButton.style.display = 'inline-block';
                 }
             }
 
@@ -914,7 +1021,7 @@
             // Update Expense Summary
             function updateExpenseSummary() {
                 const totalExpenses = expenses
-                    .filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers')
+                    .filter(expense => expense.category !== 'Loan' && expense.category !== 'Misleanious')
                     .reduce((sum, expense) => sum + expense.amount, 0);
                 document.getElementById('total').textContent = totalExpenses.toFixed(2);
                 updateNetBalance();
@@ -923,7 +1030,7 @@
             // Update Funds Summary
             function updateFundsSummary() {
                 const totalFunds = funds
-                    .filter(fund => fund.category !== 'Loan Repayments')
+                    .filter(fund => fund.category !== 'Loan')
                     .reduce((sum, fund) => sum + fund.amount, 0);
                 document.getElementById('totalFunds').textContent = totalFunds.toFixed(2);
                 updateNetBalance();
@@ -932,10 +1039,10 @@
             // Update Net Balance
             function updateNetBalance() {
                 const totalFunds = funds
-                    .filter(fund => fund.category !== 'Loan Repayments')
+                    .filter(fund => fund.category !== 'Loan')
                     .reduce((sum, fund) => sum + fund.amount, 0);
                 const totalExpenses = expenses
-                    .filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers')
+                    .filter(expense => expense.category !== 'Loan' && expense.category !== 'Misleanious')
                     .reduce((sum, expense) => sum + expense.amount, 0);
                 const netBalance = totalFunds - totalExpenses;
                 document.getElementById('netBalance').textContent = netBalance.toFixed(2);
@@ -955,7 +1062,7 @@
 
             // Expense Distribution Pie Chart
             function updateExpenseDistributionChart() {
-                const filteredCategories = categories.filter(cat => cat !== 'Loans Given' && cat !== 'Advances to Suppliers');
+                const filteredCategories = categories.filter(cat => cat !== 'Loan' && cat !== 'Misleanious');
                 const categoryAmounts = filteredCategories.map(cat => {
                     return expenses.filter(expense => expense.category === cat)
                                    .reduce((sum, expense) => sum + expense.amount, 0);
@@ -1005,7 +1112,7 @@
 
             // Funds Distribution Pie Chart
             function updateFundsDistributionChart() {
-                const filteredCategories = fundsCategories.filter(cat => cat !== 'Loan Repayments');
+                const filteredCategories = fundsCategories.filter(cat => cat !== 'Loan');
                 const categoryAmounts = filteredCategories.map(cat => {
                     return funds.filter(fund => fund.category === cat)
                                    .reduce((sum, fund) => sum + fund.amount, 0);
@@ -1055,7 +1162,7 @@
 
             // Monthly Expenses Bar Chart
             function updateMonthlyExpensesChart() {
-                const filteredExpenses = expenses.filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers');
+                const filteredExpenses = expenses.filter(expense => expense.category !== 'Loan' && expense.category !== 'Misleanious');
                 const monthlyExpenses = {};
                 filteredExpenses.forEach(expense => {
                     const dateObj = new Date(expense.date);
@@ -1067,7 +1174,7 @@
 
                 const months = Object.keys(monthlyExpenses).sort((a, b) => new Date(a) - new Date(b));
                 const datasets = categories
-                    .filter(cat => cat !== 'Loans Given' && cat !== 'Advances to Suppliers')
+                    .filter(cat => cat !== 'Loan' && cat !== 'Misleanious')
                     .map(cat => ({
                         label: cat,
                         data: months.map(month => monthlyExpenses[month][cat] || 0),
@@ -1117,7 +1224,7 @@
 
             // Monthly Funds Bar Chart
             function updateMonthlyFundsChart() {
-                const filteredFunds = funds.filter(fund => fund.category !== 'Loan Repayments');
+                const filteredFunds = funds.filter(fund => fund.category !== 'Loan');
                 const monthlyFunds = {};
                 filteredFunds.forEach(fund => {
                     const dateObj = new Date(fund.date);
@@ -1129,7 +1236,7 @@
 
                 const months = Object.keys(monthlyFunds).sort((a, b) => new Date(a) - new Date(b));
                 const datasets = fundsCategories
-                    .filter(cat => cat !== 'Loan Repayments')
+                    .filter(cat => cat !== 'Loan')
                     .map(cat => ({
                         label: cat,
                         data: months.map(month => monthlyFunds[month][cat] || 0),
@@ -1182,7 +1289,7 @@
                 const monthlyData = {};
 
                 // Process funds
-                const filteredFunds = funds.filter(fund => fund.category !== 'Loan Repayments');
+                const filteredFunds = funds.filter(fund => fund.category !== 'Loan');
                 filteredFunds.forEach(fund => {
                     const dateObj = new Date(fund.date);
                     const month = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
@@ -1191,7 +1298,7 @@
                 });
 
                 // Process expenses
-                const filteredExpenses = expenses.filter(expense => expense.category !== 'Loans Given' && expense.category !== 'Advances to Suppliers');
+                const filteredExpenses = expenses.filter(expense => expense.category !== 'Loan' && expense.category !== 'Misleanious');
                 filteredExpenses.forEach(expense => {
                     const dateObj = new Date(expense.date);
                     const month = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
@@ -1596,11 +1703,11 @@
                     tbody.appendChild(row);
 
                     if (entry.type === 'Funds') {
-                        if (entry.category !== 'Loan Repayments') {
+                        if (entry.category !== 'Loan') {
                             totalFunds += entry.amount;
                         }
                     } else if (entry.type === 'Expense') {
-                        if (entry.category !== 'Loans Given' && entry.category !== 'Advances to Suppliers') {
+                        if (entry.category !== 'Loan' && entry.category !== 'Misleanious') {
                             totalExpenses += entry.amount;
                         }
                     }
@@ -1817,7 +1924,14 @@
 
             // Export Expenses to Excel
             function exportExpensesToExcel() {
-                const wsExpenses = XLSX.utils.json_to_sheet(expenses);
+                const userRole = sessionStorage.getItem('userRole');
+                let dataToExport = expenses;
+
+                if (userRole === 'dataentry') {
+                    dataToExport = expenses.filter(expense => expense.sessionId === sessionId);
+                }
+
+                const wsExpenses = XLSX.utils.json_to_sheet(dataToExport);
 
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, wsExpenses, "Expenses");
@@ -1828,7 +1942,14 @@
 
             // Export Funds to Excel
             function exportFundsToExcel() {
-                const wsFunds = XLSX.utils.json_to_sheet(funds);
+                const userRole = sessionStorage.getItem('userRole');
+                let dataToExport = funds;
+
+                if (userRole === 'dataentry') {
+                    dataToExport = funds.filter(fund => fund.sessionId === sessionId);
+                }
+
+                const wsFunds = XLSX.utils.json_to_sheet(dataToExport);
 
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, wsFunds, "Funds");
@@ -1983,22 +2104,48 @@
             }
 
             // Confirm Reset Data
-            function confirmReset(event) {
-                event.preventDefault();
-                confirmationModalBody.textContent = "Are you sure you want to reset all data? This action cannot be undone.";
-                confirmActionButton.textContent = "Reset Data";
-                confirmedAction = resetData;
-                confirmationModal.show();
-            }
-
             function resetData() {
                 localStorage.clear();
                 expenses = [];
-                categories = ['Loans Given', 'Advances to Suppliers'];
+                categories = [
+                    'Bricks',
+                    'Sand',
+                    'Crush',
+                    'Steel',
+                    'Cement',
+                    'Gravel',
+                    'Bajjar',
+                    'Labour',
+                    'Contractor',
+                    'Electrical',
+                    'Plumbing',
+                    'Hardwear items',
+                    'Paint',
+                    'Consultant fee',
+                    'Fule',
+                    'Tiles',
+                    'Windows and doors',
+                    'Plantation',
+                    'Loan',
+                    'Misleanious'
+                ];
                 subcategories = {};
                 funds = [];
-                fundsCategories = ['Loan Repayments'];
+                fundsCategories = [
+                    'Loan',
+                    'Gift',
+                    'Seed money'
+                ];
                 fundsSubcategories = {};
+                users = [
+                    { username: 'admin', password: 'password123', role: 'admin' },
+                    { username: 'dataentry', password: 'data123', role: 'dataentry' }
+                ];
+                localStorage.setItem('users', JSON.stringify(users));
+                localStorage.setItem('categories', JSON.stringify(categories));
+                localStorage.setItem('subcategories', JSON.stringify(subcategories));
+                localStorage.setItem('fundsCategories', JSON.stringify(fundsCategories));
+                localStorage.setItem('fundsSubcategories', JSON.stringify(fundsSubcategories));
                 updateCategoryOptions();
                 updateFundsCategoryOptions();
                 updateTabs();
@@ -2014,10 +2161,12 @@
             function backupDatabase() {
                 const wsExpenses = XLSX.utils.json_to_sheet(expenses);
                 const wsFunds = XLSX.utils.json_to_sheet(funds);
+                const wsUsers = XLSX.utils.json_to_sheet(users);
 
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, wsExpenses, "Expenses");
                 XLSX.utils.book_append_sheet(wb, wsFunds, "Funds");
+                XLSX.utils.book_append_sheet(wb, wsUsers, "Users");
 
                 XLSX.writeFile(wb, "database_backup.xlsx");
                 showToast('Database backup created successfully.', 'success');
@@ -2072,6 +2221,17 @@
                             return;
                         }
 
+                        // Restore Users
+                        const usersSheet = workbook.Sheets["Users"];
+                        if (usersSheet) {
+                            const restoredUsers = XLSX.utils.sheet_to_json(usersSheet);
+                            users = restoredUsers;
+                            localStorage.setItem('users', JSON.stringify(users));
+                        } else {
+                            showToast("No 'Users' sheet found in the backup file.", 'danger');
+                            return;
+                        }
+
                         // Restore Categories and Subcategories
                         categories = [...new Set(expenses.map(exp => exp.category))];
                         subcategories = {};
@@ -2101,6 +2261,7 @@
                         localStorage.setItem('subcategories', JSON.stringify(subcategories));
                         localStorage.setItem('fundsCategories', JSON.stringify(fundsCategories));
                         localStorage.setItem('fundsSubcategories', JSON.stringify(fundsSubcategories));
+                        localStorage.setItem('users', JSON.stringify(users));
 
                         // Update the UI
                         updateCategoryOptions();
@@ -2118,7 +2279,7 @@
                 }
             }
 
-            // Group and Display Entries
+            // Group and Display Balance Statement Entries
             function groupAndDisplayBalanceStatementEntries(entries, parentDiv, periodType) {
                 const groupedEntries = {};
                 let groupKey = '';
@@ -2184,11 +2345,11 @@
                     tbody.appendChild(row);
 
                     if (entry.type === 'Funds') {
-                        if (entry.category !== 'Loan Repayments') {
+                        if (entry.category !== 'Loan') {
                             totalFunds += entry.amount;
                         }
                     } else if (entry.type === 'Expense') {
-                        if (entry.category !== 'Loans Given' && entry.category !== 'Advances to Suppliers') {
+                        if (entry.category !== 'Loan' && entry.category !== 'Misleanious') {
                             totalExpenses += entry.amount;
                         }
                     }
@@ -2240,6 +2401,55 @@
                 return `rgba(${r}, ${g}, ${b}, 0.7)`;
             }
 
+            // Password Reset Functions
+            function openPasswordResetModal() {
+                populateResetUsernameOptions();
+                newPasswordInput.value = '';
+                confirmPasswordInput.value = '';
+                passwordResetModal.show();
+            }
+
+            function populateResetUsernameOptions() {
+                resetUsernameSelect.innerHTML = '';
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.username;
+                    option.textContent = user.username;
+                    resetUsernameSelect.appendChild(option);
+                });
+            }
+
+            function handlePasswordReset() {
+                const selectedUsername = resetUsernameSelect.value;
+                const newPassword = newPasswordInput.value.trim();
+                const confirmPassword = confirmPasswordInput.value.trim();
+
+                if (!selectedUsername) {
+                    showToast('Please select a user.', 'warning');
+                    return;
+                }
+
+                if (!newPassword || !confirmPassword) {
+                    showToast('Please enter and confirm the new password.', 'warning');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showToast('Passwords do not match.', 'danger');
+                    return;
+                }
+
+                const userIndex = users.findIndex(u => u.username === selectedUsername);
+                if (userIndex !== -1) {
+                    users[userIndex].password = newPassword;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    showToast(`Password for ${selectedUsername} has been reset successfully.`, 'success');
+                    passwordResetModal.hide();
+                } else {
+                    showToast('Selected user does not exist.', 'danger');
+                }
+            }
+
             // Return public methods
             return {
                 showMainTab,
@@ -2255,7 +2465,8 @@
                 backupDatabase,
                 restoreDatabase,
                 confirmReset,
-                toggleDarkMode
+                toggleDarkMode,
+                showToast // Exposed for inline event handlers
             };
         })();
     </script>
